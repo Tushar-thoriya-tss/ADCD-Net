@@ -11,18 +11,6 @@
 
 ---
 
-## 📋 Table of Contents
-
-- [ForensicHub Benchmark](#-forensichub-benchmark-doc-protocol)
-- [Environment Setup](#-environment-setup)
-- [Data Preparation](#-data-preparation)
-- [Get OCR Masks](#-get-ocr-masks)
-- [Training](#-training)
-- [Evaluation](#-evaluation)
-- [Citation](#-citation)
-
----
-
 ## 📊 ForensicHub Benchmark (Doc Protocol)
 
 ![doc_protocol](./fig/docpro.png)
