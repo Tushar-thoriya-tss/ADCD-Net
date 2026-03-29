@@ -1,22 +1,18 @@
-<div align="center">
 
 # ADCD-Net
 
-### Robust Document Image Forgery Localization via Adaptive DCT Feature and Hierarchical Content Disentanglement
-
-*Accepted at **ICCV 2025***
-
 [![arXiv](https://img.shields.io/badge/arXiv-2507.16397-b31b1b.svg)](https://arxiv.org/abs/2507.16397)
+[![Venue](https://img.shields.io/badge/ICCV%202025-0a66c2.svg)](https://openaccess.thecvf.com/content/ICCV2025/html/Wong_ADCD-Net_Robust_Document_Image_Forgery_Localization_via_Adaptive_DCT_Feature_ICCV_2025_paper.html)
 [![License](https://img.shields.io/github/license/KahimWong/ADCD-Net)](LICENSE)
 
-</div>
+> **ADCD-Net** addresses the challenging problem of document image forgery localization by leveraging adaptive DCT features alongside hierarchical content disentanglement to robustly detect tampered regions even under compression distortions.
+
+![model_overview](./fig/model_overview.png)
 
 ---
 
 ## 📋 Table of Contents
 
-- [Overview](#-overview)
-- [Model Architecture](#-model-architecture)
 - [ForensicHub Benchmark](#-forensichub-benchmark-doc-protocol)
 - [Environment Setup](#-environment-setup)
 - [Data Preparation](#-data-preparation)
@@ -24,18 +20,6 @@
 - [Training](#-training)
 - [Evaluation](#-evaluation)
 - [Citation](#-citation)
-
----
-
-## 🔍 Overview
-
-ADCD-Net addresses the challenging problem of document image forgery localization by leveraging adaptive DCT features alongside hierarchical content disentanglement to robustly detect tampered regions even under compression distortions.
-
----
-
-## 🏗 Model Architecture
-
-![model_overview](./fig/model_overview.png)
 
 ---
 
@@ -56,8 +40,6 @@ For more details, see [ForensicHub — Doc Protocol](https://github.com/scu-zjz/
 | Python | 3.10.13 |
 | PyTorch | 2.3.0+cu121 |
 | albumentations | 2.0.8 |
-
-Install the required packages according to the versions above. GPU training requires CUDA 12.1 or compatible.
 
 ---
 
