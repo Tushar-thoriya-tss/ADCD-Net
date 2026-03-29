@@ -7,8 +7,6 @@
 *Accepted at **ICCV 2025***
 
 [![arXiv](https://img.shields.io/badge/arXiv-2507.16397-b31b1b.svg)](https://arxiv.org/abs/2507.16397)
-[![Python](https://img.shields.io/badge/Python-3.10-3776ab?logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.3.0-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License](https://img.shields.io/github/license/KahimWong/ADCD-Net)](LICENSE)
 
 </div>
@@ -31,12 +29,7 @@
 
 ## 🔍 Overview
 
-**ADCD-Net** is the official implementation of:
-
-> *ADCD-Net: Robust Document Image Forgery Localization via Adaptive DCT Feature and Hierarchical Content Disentanglement*
-> Kahim Wong, Jicheng Zhou, Haiwei Wu, Yain-Whar Si, Jiantao Zhou — **ICCV 2025**
-
-ADCD-Net addresses the challenging problem of **document image forgery localization** by leveraging adaptive DCT features alongside hierarchical content disentanglement to robustly detect tampered regions even under compression distortions.
+ADCD-Net addresses the challenging problem of document image forgery localization by leveraging adaptive DCT features alongside hierarchical content disentanglement to robustly detect tampered regions even under compression distortions.
 
 ---
 
