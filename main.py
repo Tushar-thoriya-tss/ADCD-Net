@@ -56,22 +56,23 @@ class Trainer:
             os.makedirs(self.ckpt_dir, exist_ok=True)
 
         # data loader
-        self.train_dl = get_train_dl(self.world_size, self.rank)
+        if cfg.run_mode == 'train':
+            self.train_dl = get_train_dl(self.world_size, self.rank)
         self.val_dls = get_val_dl(self.world_size, self.rank)
         # model
         self.model = ADCDNet().to(f'cuda:{self.rank}')
         self.load_ckpt(cfg.ckpt)
         self.model = DDP(self.model, device_ids=[self.rank], find_unused_parameters=True)
-        # optimizer and scheduler
-        self.optimizer = AdamW(self.model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
-        self.scheduler = CosineAnnealingLR(self.optimizer, len(self.train_dl) * cfg.epochs, eta_min=cfg.min_lr)
-        # loss
-        self.loc_ce = SoftCrossEntropyLoss(smooth_factor=0.1, reduction="mean", ignore_index=None)
-        self.loc_lovasz = LovaszLoss(mode='multiclass', per_image=True)
-        self.rec_l1 = nn.L1Loss()
-        self.align_ce = nn.CrossEntropyLoss()
+        # optimizer and scheduler (only needed during training)
+        if cfg.run_mode == 'train':
+            self.optimizer = AdamW(self.model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
+            self.scheduler = CosineAnnealingLR(self.optimizer, len(self.train_dl) * cfg.epochs, eta_min=cfg.min_lr)
+            self.loc_ce = SoftCrossEntropyLoss(smooth_factor=0.1, reduction="mean", ignore_index=None)
+            self.loc_lovasz = LovaszLoss(mode='multiclass', per_image=True)
+            self.rec_l1 = nn.L1Loss()
+            self.align_ce = nn.CrossEntropyLoss()
+            self.scaler = GradScaler()
 
-        self.scaler = GradScaler()
         self.eps = 1e-8
 
     def train(self):
@@ -85,9 +86,23 @@ class Trainer:
                 self.train_dl.dataset.S += cfg.step_per_epoch
 
             self.train_dl.sampler.set_epoch(epoch)
-            tqdm_fn = tqdm if self.rank == 0 else lambda x: x
+            if self.rank == 0:
+                bar_format = (
+                    "{desc} {percentage:3.0f}%|{bar:50}| "
+                    "{n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}"
+                )
+                pbar = tqdm(
+                    self.train_dl,
+                    bar_format=bar_format,
+                    colour="cyan",
+                    desc=f"Epoch {epoch:02d}/{cfg.epochs}",
+                    dynamic_ncols=True,
+                    leave=True,
+                )
+            else:
+                pbar = self.train_dl
 
-            for items in tqdm_fn(self.train_dl):
+            for items in pbar:
 
                 # forward
                 img, dct, qt, mask, ocr_mask, is_align, min_qf = \
@@ -165,6 +180,13 @@ class Trainer:
                         losses_record[name].update(avg_val)
 
                 if self.rank == 0:
+                    pbar.set_postfix({
+                        'loss': f"{losses_record['total'].val:.4f}",
+                        'ce':   f"{losses_record['ce'].val:.4f}",
+                        'iou':  f"{losses_record['iou'].val:.4f}",
+                        'f1':   f"{losses_record['f1'].val:.4f}",
+                        'lr':   f"{self.optimizer.param_groups[0]['lr']:.2e}",
+                    })
                     if step % cfg.print_log_step == 0:
                         self.print_log(step, losses_record)
                         self.write_log(step, losses_record)
@@ -265,10 +287,11 @@ class Trainer:
         if self.rank != 0:
             return
         lr = self.optimizer.param_groups[0]['lr']
-        output = 'Step: %6d; lr:%.2e;' % (step, lr)
+        ts = datetime.datetime.now().strftime('%m-%d %H:%M:%S')
+        output = '[%s] Step: %6d; lr:%.2e;' % (ts, step, lr)
         for name, loss in losses_record.items():
             output += ' %s: %5.4f;' % (name, loss.val)
-        logging.info(output)
+        tqdm.write(output)
 
     def load_ckpt(self, ckpt_path):
         if ckpt_path is not None:
@@ -299,9 +322,9 @@ def main(rank, world_size):
     dist.init_process_group(backend='nccl', rank=rank, world_size=world_size)
     torch.cuda.set_device(rank)
     trainer = Trainer(rank, world_size)
-    if cfg.mode == 'train':
+    if cfg.run_mode == 'train':
         trainer.train()
-    elif cfg.mode == 'val':
+    elif cfg.run_mode == 'val':
         trainer.val()
 
 
