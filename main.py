@@ -137,8 +137,9 @@ class Trainer:
                 # dct align score loss
                 align_loss = self.align_ce(align_logits, is_align.long())
 
-                # focal loss
-                focal_loss = [cfg.focal_w * (loss.sum() / (loss != 0).sum()) for loss in focal_losses]
+                # focal loss (clamp denominator to avoid 0/0=NaN on pristine batches)
+                focal_loss = [cfg.focal_w * (loss.sum() / (loss != 0).sum().clamp(min=1))
+                              for loss in focal_losses]
                 focal_loss = torch.stack(focal_loss).sum()
 
                 # localization loss
@@ -270,13 +271,24 @@ class Trainer:
     def compute_f1(self, logit, y):
         pred = logit.argmax(1)  # ori [b,h,w]
         y_ = y.squeeze(1)
-        matched = (pred * y_).sum((1, 2))
-        pred_sum = pred.sum((1, 2))
-        y_sum = y_.sum((1, 2))
-        p = (matched / (pred_sum + self.eps)).mean().item()
-        r = (matched / (y_sum + self.eps)).mean().item()
-        f1 = (2 * p * r / (p + r + self.eps))
-        return f1, p, r
+        matched = (pred * y_).sum((1, 2)).float()
+        pred_sum = pred.sum((1, 2)).float()
+        y_sum = y_.sum((1, 2)).float()
+
+        # per-image precision / recall / f1
+        per_p = matched / (pred_sum + self.eps)
+        per_r = matched / (y_sum + self.eps)
+        per_f1 = 2 * per_p * per_r / (per_p + per_r + self.eps)
+
+        # pristine GT (y_sum == 0): perfect score iff pred is also empty
+        pristine = y_sum == 0
+        if pristine.any():
+            perfect = (pred_sum == 0).float()
+            per_p = torch.where(pristine, perfect, per_p)
+            per_r = torch.where(pristine, perfect, per_r)
+            per_f1 = torch.where(pristine, perfect, per_f1)
+
+        return per_f1.mean().item(), per_p.mean().item(), per_r.mean().item()
 
     def write_log(self, cnt, losses_record):
         if self.rank == 0:

@@ -7,7 +7,7 @@ import os.path as op
 
 # ---------------- Mode ----------------
 # 'train' = train the model;  'val' = run validation/inference only.
-run_mode = 'train'   # 'train' | 'val'
+run_mode = 'val'   # 'train' | 'val'
 check_val = False
 
 # ---------------- Runtime ----------------
@@ -28,7 +28,7 @@ train_ds_name = 'aadhar_tamper_train'
 # In val mode, `pretrained_ckpt` MUST point to a trained checkpoint.
 init_weights = 'scratch'  # 'scratch' | 'pretrained'
 
-pretrained_ckpt  = '/sharedrive/Tushar Thoriya/GitHub techniques/ADCD-Net/ADCD-Net_exp_data/ADCDNet.pth'
+pretrained_ckpt  = '/sharedrive/Tushar Thoriya/GitHub techniques/DATAAAAASET/exp_out/ADCDNet/Log_v05071857/ckpt/Step80000_Score0.7659.pth'
 docres_ckpt_path = '/sharedrive/Tushar Thoriya/GitHub techniques/ADCD-Net/ADCD-Net_exp_data/docres.pkl'
 
 # ---------------- Schedule ----------------
