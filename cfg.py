@@ -34,11 +34,11 @@ docres_ckpt_path = '/sharedrive/Tushar Thoriya/GitHub techniques/ADCD-Net/ADCD-N
 # ---------------- Schedule ----------------
 train_bs       = 2          # batch size per device
 step_per_epoch = 1000         # 1000 for full runs
-epochs         = 200       # 200 for full runs
+epochs         = 120       # 200 for full runs
 accum_step     = 2          # gradient accumulation steps
 init_S         = 0          # JPEG curriculum start step
 print_log_step = 50
-val_step       = step_per_epoch * 10   # mid-training val cadence
+val_step       = step_per_epoch * 5   # mid-training val cadence
 ds_len = sample_per_epoch = step_per_epoch * train_bs * device_n
 total_step = step_per_epoch * epochs
 

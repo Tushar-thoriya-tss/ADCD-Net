@@ -65,7 +65,7 @@ class ADCDNet(nn.Module):
             ms_dct_feats=ms_dct_feats,
             dct_align_score=align_score)
 
-        pp_maps = self.get_pp_map(pp_feats, ocr_mask, img_size)
+        pp_maps = self.get_pp_map(pp_feats, ocr_mask, img_size, gt_mask=mask if is_train else None)
         pp_scale = self.pp_scale_proj(pp_maps)
         pp_bias = self.pp_bias_proj(pp_maps)
         feat = feat * pp_scale + pp_bias
@@ -82,11 +82,13 @@ class ADCDNet(nn.Module):
 
         return logits, pp_feats, align_logits, rec_items, focal_losses
 
-    def get_pp_map(self, pp_feats, y, img_size):
+    def get_pp_map(self, pp_feats, y, img_size, gt_mask=None):
         maps_per_level = []
 
         # pre-compute background mask once; it gets resized inside the loop
         y = y.float()
+        if gt_mask is not None:
+            gt_mask = gt_mask.float()
 
         for f in pp_feats:  # -- loop only over pyramid levels
             f = F.normalize(f, p=2, dim=1)  # [B, C, H, W], channel-wise ℓ₂-norm
@@ -94,6 +96,11 @@ class ADCDNet(nn.Module):
 
             # resize mask to feature resolution and create 0/1 background mask
             bg_mask = (F.interpolate(y, size=(h, w), mode="nearest") == 0).float()  # [B, 1, H, W]
+            # exclude tampered pixels from the "pristine" reference during training
+            # (otherwise non-text tamper regions like forged photos poison the prototype)
+            if gt_mask is not None:
+                clean_mask = (F.interpolate(gt_mask, size=(h, w), mode="nearest") == 0).float()
+                bg_mask = bg_mask * clean_mask
 
             # -------- background mean feature (vectorised over batch) ----------
             bg_sum = (f * bg_mask).sum(dim=(2, 3))  # [B, C]
